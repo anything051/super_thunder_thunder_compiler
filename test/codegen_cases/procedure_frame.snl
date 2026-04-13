@@ -1,0 +1,13 @@
+PROGRAM procframe
+VAR seed : INTEGER;
+PROCEDURE showPlusOne(value : INTEGER);
+VAR temp : INTEGER;
+BEGIN
+  temp := value + 1;
+  WRITE(temp);
+  RETURN;
+END
+BEGIN
+  seed := 7;
+  showPlusOne(seed);
+END

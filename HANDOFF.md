@@ -133,9 +133,10 @@
   - 过程形参和局部变量已迁移到过程私有栈帧，支持递归和重入场景下的独立存储
   - 仍未实现返回值协议、静态链或 display
 
-- 未经 MARS 实测
-  - 当前已能生成 MIPS 汇编并通过本地测试
-  - 但还没有用真实 MARS 仿真器做最终运行验证
+- MARS 验证样例已准备
+  - 已新增 `test/codegen_cases/selectors.snl` 和 `test/codegen_cases/procedure_frame.snl`
+  - 当前环境已可自动验证这两个样例能成功生成 `.asm`
+  - 当前工作区未附带 `Mars.jar`，因此仓库内尚未完成真实 MARS 仿真器实机回归
 
 ## 4. 如何运行和测试
 
@@ -180,7 +181,7 @@ test/hello.asm
   - 把过程调用从简化静态模型升级为完整栈帧模型
 
 - 第三优先级
-  - 用真实 MARS 仿真器跑通 `test/hello.snl` 和至少一个包含 selector/过程调用的样例
+  - 在具备 `Mars.jar` 的环境中跑通 `test/hello.snl`、`test/codegen_cases/selectors.snl`、`test/codegen_cases/procedure_frame.snl`
 
 - 做完以上三项后
   - 更新 README 的已知限制

@@ -64,6 +64,8 @@ python main.py test/hello.snl --dump-tokens --dump-ast
 正向样例：
 - `test/hello.snl`
 - `test/parser_cases/if_while.snl`
+- `test/codegen_cases/selectors.snl`
+- `test/codegen_cases/procedure_frame.snl`
 
 词法样例：
 - `test/lexer_cases/basic.snl`
@@ -91,10 +93,29 @@ python main.py test/hello.snl --dump-tokens --dump-ast
 
 ## 已知限制
 
-- 当前 MIPS 代码生成对数组元素和记录字段的地址计算还未完整实现
-- 过程调用采用简化静态存储方案，不是完整运行时栈帧模型
 - `RETURN expr` 形式未实现返回值协议
-- 递归、复杂局部变量布局和更完整的 MARS 兼容性仍需继续收口
+- 未实现静态链或 display，嵌套过程只依赖全局变量与当前过程私有栈帧
+- 仓库已准备 MARS 验证样例与运行说明，但当前环境未附带 `Mars.jar`，尚未做仓库内实机回归
+
+## MARS 验证建议
+
+先生成汇编：
+
+```bash
+python main.py test/codegen_cases/selectors.snl
+python main.py test/codegen_cases/procedure_frame.snl
+```
+
+若本机已有 MARS jar，可继续运行：
+
+```bash
+java -jar /path/to/Mars.jar nc test/codegen_cases/selectors.asm
+java -jar /path/to/Mars.jar nc test/codegen_cases/procedure_frame.asm
+```
+
+建议重点观察：
+- `selectors.asm` 是否正确输出两个整数，覆盖数组下标和记录字段寻址
+- `procedure_frame.asm` 是否正确输出 `8`，覆盖实参压栈和过程栈帧恢复
 
 ## 完成标准对照
 

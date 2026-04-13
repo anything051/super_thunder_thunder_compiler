@@ -1,5 +1,6 @@
 import os
 import unittest
+from pathlib import Path
 
 
 class SampleProgramTests(unittest.TestCase):
@@ -57,6 +58,21 @@ class SampleProgramTests(unittest.TestCase):
                     analyze(parse(tokenize(source)))
 
                 self.assertEqual(context.exception.error_code, error_code)
+
+    def test_mars_validation_samples_exist_and_compile(self):
+        import main
+
+        sample_paths = [
+            "test/codegen_cases/selectors.snl",
+            "test/codegen_cases/procedure_frame.snl",
+        ]
+
+        for sample_path in sample_paths:
+            with self.subTest(sample_path=sample_path):
+                self.assertTrue(os.path.exists(sample_path), sample_path)
+                exit_code = main.compile_file(sample_path)
+                self.assertEqual(exit_code, 0)
+                self.assertTrue(Path(sample_path).with_suffix(".asm").exists())
 
 
 if __name__ == "__main__":
