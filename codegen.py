@@ -21,6 +21,13 @@ class CodegenError(Exception):
     """Raised when code generation fails."""
 
 
+@dataclass(frozen=True)
+class StorageLocation:
+    kind: str
+    identifier: str
+    type_info: Any
+
+
 @dataclass
 class MipsEmitter:
     data_lines: list[str] = field(default_factory=list)
@@ -117,15 +124,15 @@ class CodeGenerator:
     def _emit_statement(self, statement: Any, current_scope: str | None) -> None:
         if isinstance(statement, AssignStmtNode):
             self._emit_expression(statement.value, current_scope)
-            target = self._resolve_scalar_target(statement.target, current_scope)
-            self.emitter.emit_text(f"sw $t0, {target}")
+            self._emit_var_address(statement.target, current_scope, target_register="$t1")
+            self.emitter.emit_text("sw $t0, 0($t1)")
             return
 
         if isinstance(statement, ReadStmtNode):
-            target = self._resolve_scalar_target(statement.target, current_scope)
+            self._emit_var_address(statement.target, current_scope, target_register="$t1")
             self.emitter.emit_text("li $v0, 5")
             self.emitter.emit_text("syscall")
-            self.emitter.emit_text(f"sw $v0, {target}")
+            self.emitter.emit_text("sw $v0, 0($t1)")
             return
 
         if isinstance(statement, WriteStmtNode):
@@ -191,8 +198,8 @@ class CodeGenerator:
             return
 
         if isinstance(expression, VarRefNode):
-            target = self._resolve_scalar_target(expression, current_scope)
-            self.emitter.emit_text(f"lw $t0, {target}")
+            self._emit_var_address(expression, current_scope, target_register="$t1")
+            self.emitter.emit_text("lw $t0, 0($t1)")
             return
 
         if isinstance(expression, BinaryExprNode):
@@ -220,6 +227,50 @@ class CodeGenerator:
 
         raise CodegenError(f"expression not supported in task 7 codegen: {type(expression).__name__}")
 
+    def _emit_var_address(self, var_ref: VarRefNode, current_scope: str | None, target_register: str = "$t1") -> Any:
+        storage = self._resolve_storage(var_ref.name, current_scope)
+        self._emit_storage_address(storage, target_register)
+        current_type = storage.type_info
+
+        for selector in var_ref.selectors:
+            if selector["kind"] == "index":
+                if not isinstance(current_type, ArrayType):
+                    raise CodegenError(f"cannot index non-array value '{var_ref.name}'")
+                self._emit_expression(selector["expression"], current_scope)
+                self.emitter.emit_text(f"addi $t2, $t0, {-current_type.lower}")
+                element_size = self._byte_size(current_type.element_type)
+                self.emitter.emit_text(f"mul $t2, $t2, {element_size}")
+                self.emitter.emit_text(f"add {target_register}, {target_register}, $t2")
+                current_type = current_type.element_type
+                continue
+
+            if selector["kind"] == "field":
+                if not isinstance(current_type, RecordType):
+                    raise CodegenError(f"cannot access field on non-record value '{var_ref.name}'")
+                field_name = selector["name"]
+                field_offset = self._record_field_offset(current_type, field_name)
+                self.emitter.emit_text(f"addi {target_register}, {target_register}, {field_offset}")
+                current_type = current_type.fields[field_name]
+                continue
+
+            raise CodegenError(f"unsupported selector kind '{selector['kind']}'")
+
+        return current_type
+
+    def _emit_storage_address(self, storage: StorageLocation, target_register: str) -> None:
+        if storage.kind == "label":
+            self.emitter.emit_text(f"la {target_register}, {storage.identifier}")
+            return
+        raise CodegenError(f"unsupported storage kind '{storage.kind}'")
+
+    def _record_field_offset(self, record_type: RecordType, field_name: str) -> int:
+        offset = 0
+        for current_name, current_type in record_type.fields.items():
+            if current_name == field_name:
+                return offset
+            offset += self._byte_size(current_type)
+        raise CodegenError(f"record has no field '{field_name}'")
+
     def _resolve_scalar_target(self, var_ref: VarRefNode, current_scope: str | None) -> str:
         if var_ref.selectors:
             raise CodegenError("selector-based assignments are not supported until task 8")
@@ -232,6 +283,17 @@ class CodeGenerator:
         if scoped_key not in self.variable_types and global_key not in self.variable_types:
             raise CodegenError(f"unknown storage target '{var_ref.name}'")
         raise CodegenError(f"missing storage label for '{var_ref.name}'")
+
+    def _resolve_storage(self, name: str, current_scope: str | None) -> StorageLocation:
+        scoped_key = (current_scope, name)
+        global_key = (None, name)
+        if scoped_key in self.storage_labels:
+            return StorageLocation("label", self.storage_labels[scoped_key], self.variable_types[scoped_key])
+        if global_key in self.storage_labels:
+            return StorageLocation("label", self.storage_labels[global_key], self.variable_types[global_key])
+        if scoped_key not in self.variable_types and global_key not in self.variable_types:
+            raise CodegenError(f"unknown storage target '{name}'")
+        raise CodegenError(f"missing storage label for '{name}'")
 
     def _const_value(self, value: Any) -> int:
         if isinstance(value, int):
