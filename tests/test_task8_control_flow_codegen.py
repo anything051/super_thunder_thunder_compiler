@@ -57,11 +57,58 @@ END
         assembly = generate(ast, semantic_result)
 
         self.assertIn("show:", assembly)
-        self.assertIn("show__a: .word 0", assembly)
-        self.assertIn("sw $t0, show__a", assembly)
+        self.assertIn("addi $sp, $sp, -4", assembly)
+        self.assertIn("sw $t0, 0($sp)", assembly)
         self.assertIn("jal show", assembly)
+        self.assertIn("addi $sp, $sp, 4", assembly)
+        self.assertIn("addi $sp, $sp, -12", assembly)
+        self.assertIn("sw $ra, 0($sp)", assembly)
+        self.assertIn("sw $fp, 4($sp)", assembly)
+        self.assertIn("lw $t0, 12($fp)", assembly)
+        self.assertIn("sw $t0, 8($fp)", assembly)
         self.assertIn("jr $ra", assembly)
-        self.assertIn("lw $a0, show__a", assembly)
+        self.assertIn("move $a0, $t0", assembly)
+        self.assertNotIn("show__a: .word 0", assembly)
+
+    def test_generate_procedure_stack_frame_and_argument_passing(self):
+        from codegen import generate
+
+        ast, semantic_result = compile_semantic_result(
+            """
+PROGRAM demo
+VAR x : INTEGER;
+PROCEDURE show(a : INTEGER);
+VAR temp : INTEGER;
+BEGIN
+  temp := a;
+  WRITE(temp);
+  RETURN;
+END
+BEGIN
+  x := 7;
+  show(x);
+END
+"""
+        )
+
+        assembly = generate(ast, semantic_result)
+
+        self.assertIn("addi $sp, $sp, -4", assembly)
+        self.assertIn("sw $t0, 0($sp)", assembly)
+        self.assertIn("addi $sp, $sp, 4", assembly)
+        self.assertIn("addi $sp, $sp, -16", assembly)
+        self.assertIn("sw $ra, 0($sp)", assembly)
+        self.assertIn("sw $fp, 4($sp)", assembly)
+        self.assertIn("move $fp, $sp", assembly)
+        self.assertIn("lw $t0, 16($fp)", assembly)
+        self.assertIn("sw $t0, 8($fp)", assembly)
+        self.assertIn("addi $t1, $fp, 12", assembly)
+        self.assertIn("sw $t0, 0($t1)", assembly)
+        self.assertIn("lw $ra, 0($fp)", assembly)
+        self.assertIn("lw $t1, 4($fp)", assembly)
+        self.assertIn("move $fp, $t1", assembly)
+        self.assertNotIn("show__a: .word 0", assembly)
+        self.assertNotIn("show__temp: .word 0", assembly)
 
 
 if __name__ == "__main__":

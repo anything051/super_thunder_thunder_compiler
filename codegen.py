@@ -28,6 +28,13 @@ class StorageLocation:
     type_info: Any
 
 
+@dataclass(frozen=True)
+class FrameLayout:
+    size: int
+    param_offsets: dict[str, int]
+    local_offsets: dict[str, int]
+
+
 @dataclass
 class MipsEmitter:
     data_lines: list[str] = field(default_factory=list)
@@ -58,10 +65,11 @@ class CodeGenerator:
         self.storage_labels: dict[tuple[str | None, str], str] = {}
         self.variable_types: dict[tuple[str | None, str], Any] = {}
         self.procedure_scopes: dict[str, Any] = {}
+        self.frame_layouts: dict[str, FrameLayout] = {}
 
     def generate(self, ast) -> str:
         self._declare_global_storage()
-        self._declare_procedure_storage()
+        self._prepare_procedure_layouts()
         self.emitter.emit_text(".globl main")
         self.emitter.emit_text("main:")
 
@@ -73,8 +81,9 @@ class CodeGenerator:
 
         for procedure in ast.procedures:
             self.emitter.emit_text(f"{procedure.name}:")
+            self._emit_procedure_prologue(procedure.name)
             self._emit_compound(procedure.body, procedure.name)
-            self.emitter.emit_text("jr $ra")
+            self._emit_procedure_epilogue(procedure.name)
 
         return self.emitter.render()
 
@@ -86,20 +95,33 @@ class CodeGenerator:
             self.storage_labels[(None, name)] = name
             self.emitter.emit_data(f"{name}: {self._storage_for_type(symbol.type_info)}")
 
-    def _declare_procedure_storage(self) -> None:
+    def _prepare_procedure_layouts(self) -> None:
         for name, symbol in self.semantic_result.global_scope.symbols.items():
             if symbol.kind != "procedure":
                 continue
             if symbol.scope is None:
                 continue
             self.procedure_scopes[name] = symbol.scope
-            for local_name, local_symbol in symbol.scope.symbols.items():
-                if local_symbol.kind not in {"param", "var"}:
-                    continue
-                label = f"{name}__{local_name}"
-                self.variable_types[(name, local_name)] = local_symbol.type_info
-                self.storage_labels[(name, local_name)] = label
-                self.emitter.emit_data(f"{label}: {self._storage_for_type(local_symbol.type_info)}")
+            self.frame_layouts[name] = self._build_frame_layout(symbol)
+
+    def _build_frame_layout(self, procedure_symbol: Any) -> FrameLayout:
+        param_offsets: dict[str, int] = {}
+        local_offsets: dict[str, int] = {}
+        next_offset = 8
+
+        for param_symbol in procedure_symbol.params:
+            param_offsets[param_symbol.name] = next_offset
+            self.variable_types[(procedure_symbol.name, param_symbol.name)] = param_symbol.type_info
+            next_offset += self._byte_size(param_symbol.type_info)
+
+        for local_name, local_symbol in procedure_symbol.scope.symbols.items():
+            if local_symbol.kind != "var":
+                continue
+            local_offsets[local_name] = next_offset
+            self.variable_types[(procedure_symbol.name, local_name)] = local_symbol.type_info
+            next_offset += self._byte_size(local_symbol.type_info)
+
+        return FrameLayout(size=next_offset, param_offsets=param_offsets, local_offsets=local_offsets)
 
     def _storage_for_type(self, type_info: Any) -> str:
         if isinstance(type_info, BuiltinType):
@@ -138,8 +160,11 @@ class CodeGenerator:
         if isinstance(statement, WriteStmtNode):
             self._emit_expression(statement.expression, current_scope)
             if isinstance(statement.expression, VarRefNode) and not statement.expression.selectors:
-                label = self._resolve_scalar_target(statement.expression, current_scope)
-                self.emitter.emit_text(f"lw $a0, {label}")
+                storage = self._resolve_storage(statement.expression.name, current_scope)
+                if storage.kind == "label":
+                    self.emitter.emit_text(f"lw $a0, {storage.identifier}")
+                else:
+                    self.emitter.emit_text("move $a0, $t0")
             else:
                 self.emitter.emit_text("move $a0, $t0")
             self.emitter.emit_text("li $v0, 1")
@@ -175,15 +200,20 @@ class CodeGenerator:
             if procedure_scope is None:
                 raise CodegenError(f"unknown procedure '{statement.name}'")
             params = [sym for sym in procedure_scope.symbols.values() if sym.kind == "param"]
-            for argument, parameter in zip(statement.arguments, params):
+            for argument, parameter in reversed(list(zip(statement.arguments, params))):
                 self._emit_expression(argument, current_scope)
-                label = self.storage_labels[(statement.name, parameter.name)]
-                self.emitter.emit_text(f"sw $t0, {label}")
+                self.emitter.emit_text("addi $sp, $sp, -4")
+                self.emitter.emit_text("sw $t0, 0($sp)")
             self.emitter.emit_text(f"jal {statement.name}")
+            if params:
+                self.emitter.emit_text(f"addi $sp, $sp, {len(params) * 4}")
             return
 
         if isinstance(statement, ReturnStmtNode):
-            self.emitter.emit_text("jr $ra")
+            if current_scope is None:
+                self.emitter.emit_text("jr $ra")
+                return
+            self.emitter.emit_text(f"j {self._procedure_end_label(current_scope)}")
             return
 
         raise CodegenError(f"statement not supported in task 8 codegen: {type(statement).__name__}")
@@ -261,6 +291,9 @@ class CodeGenerator:
         if storage.kind == "label":
             self.emitter.emit_text(f"la {target_register}, {storage.identifier}")
             return
+        if storage.kind == "frame":
+            self.emitter.emit_text(f"addi {target_register}, $fp, {storage.identifier}")
+            return
         raise CodegenError(f"unsupported storage kind '{storage.kind}'")
 
     def _record_field_offset(self, record_type: RecordType, field_name: str) -> int:
@@ -285,6 +318,12 @@ class CodeGenerator:
         raise CodegenError(f"missing storage label for '{var_ref.name}'")
 
     def _resolve_storage(self, name: str, current_scope: str | None) -> StorageLocation:
+        if current_scope is not None and current_scope in self.frame_layouts:
+            frame_layout = self.frame_layouts[current_scope]
+            if name in frame_layout.local_offsets:
+                return StorageLocation("frame", str(frame_layout.local_offsets[name]), self.variable_types[(current_scope, name)])
+            if name in frame_layout.param_offsets:
+                return StorageLocation("frame", str(frame_layout.param_offsets[name]), self.variable_types[(current_scope, name)])
         scoped_key = (current_scope, name)
         global_key = (None, name)
         if scoped_key in self.storage_labels:
@@ -294,6 +333,34 @@ class CodeGenerator:
         if scoped_key not in self.variable_types and global_key not in self.variable_types:
             raise CodegenError(f"unknown storage target '{name}'")
         raise CodegenError(f"missing storage label for '{name}'")
+
+    def _emit_procedure_prologue(self, procedure_name: str) -> None:
+        frame_layout = self.frame_layouts[procedure_name]
+        self.emitter.emit_text(f"addi $sp, $sp, -{frame_layout.size}")
+        self.emitter.emit_text("sw $ra, 0($sp)")
+        self.emitter.emit_text("sw $fp, 4($sp)")
+        self.emitter.emit_text("move $fp, $sp")
+
+        incoming_base = frame_layout.size
+        param_names = list(frame_layout.param_offsets.keys())
+        for index, name in enumerate(param_names):
+            source_offset = incoming_base + index * 4
+            target_offset = frame_layout.param_offsets[name]
+            self.emitter.emit_text(f"lw $t0, {source_offset}($fp)")
+            self.emitter.emit_text(f"sw $t0, {target_offset}($fp)")
+
+    def _emit_procedure_epilogue(self, procedure_name: str) -> None:
+        frame_layout = self.frame_layouts[procedure_name]
+        end_label = self._procedure_end_label(procedure_name)
+        self.emitter.emit_text(f"{end_label}:")
+        self.emitter.emit_text("lw $ra, 0($fp)")
+        self.emitter.emit_text("lw $t1, 4($fp)")
+        self.emitter.emit_text(f"addi $sp, $fp, {frame_layout.size}")
+        self.emitter.emit_text("move $fp, $t1")
+        self.emitter.emit_text("jr $ra")
+
+    def _procedure_end_label(self, procedure_name: str) -> str:
+        return f"{procedure_name}_epilogue"
 
     def _const_value(self, value: Any) -> int:
         if isinstance(value, int):
