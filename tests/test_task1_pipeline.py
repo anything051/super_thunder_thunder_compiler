@@ -14,7 +14,7 @@ class CompilePipelineTests(unittest.TestCase):
         stderr = io.StringIO()
 
         with redirect_stdout(stdout), redirect_stderr(stderr):
-            exit_code = main.compile_file("test/hello.snl")
+            exit_code = main.compile_file("test/does-not-exist.snl")
 
         self.assertNotEqual(exit_code, 0)
         self.assertIn("SOURCE", stderr.getvalue())
@@ -67,6 +67,7 @@ class CompilePipelineTests(unittest.TestCase):
                 ],
             )
             self.assertIn("Compilation succeeded", stdout.getvalue())
+            self.assertIn("Output artifact:", stdout.getvalue())
             self.assertEqual(stderr.getvalue(), "")
         finally:
             os.unlink(source_path)

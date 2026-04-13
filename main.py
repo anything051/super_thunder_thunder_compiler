@@ -54,13 +54,19 @@ def compile_file(source_path: str, dump_tokens: bool = False, dump_ast: bool = F
         if dump_ast:
             _dump_ast(ast)
         semantic_result = _run_stage("SEMANTIC", analyze, ast)
-        output = _run_stage("CODEGEN", generate, ast, semantic_result)
+        assembly = _run_stage("CODEGEN", generate, ast, semantic_result)
     except Exception:
         return 1
 
+    output_path = str(Path(source_path).with_suffix(".asm"))
+    try:
+        Path(output_path).write_text(assembly, encoding="utf-8")
+    except OSError as exc:
+        print(_format_error("OUTPUT", str(exc)), file=sys.stderr)
+        return 1
+
     print(f"Compilation succeeded for {source_path}")
-    if output is not None:
-        print(f"Output artifact: {output}")
+    print(f"Output artifact: {output_path}")
     return 0
 
 
