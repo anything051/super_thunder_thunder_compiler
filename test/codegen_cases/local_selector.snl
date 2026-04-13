@@ -1,0 +1,16 @@
+PROGRAM localselector
+PROCEDURE showLocal(idx : INTEGER);
+VAR localArr : ARRAY [1..3] OF INTEGER;
+VAR localRec : RECORD
+  left, right : INTEGER;
+END;
+BEGIN
+  localArr[1] := 3;
+  localArr[2] := idx;
+  localRec.right := localArr[2];
+  WRITE(localRec.right);
+  RETURN;
+END
+BEGIN
+  showLocal(6);
+END

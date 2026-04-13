@@ -1,0 +1,14 @@
+PROGRAM multiparam
+VAR x, y : INTEGER;
+PROCEDURE addPair(a, b : INTEGER);
+VAR sum : INTEGER;
+BEGIN
+  sum := a + b;
+  WRITE(sum);
+  RETURN;
+END
+BEGIN
+  x := 2;
+  y := 5;
+  addPair(x, y);
+END

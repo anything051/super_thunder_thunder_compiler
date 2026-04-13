@@ -1,0 +1,13 @@
+PROGRAM multilocals
+PROCEDURE keepValues(seed : INTEGER);
+VAR first, second : INTEGER;
+BEGIN
+  first := seed;
+  second := seed + 1;
+  WRITE(first);
+  WRITE(second);
+  RETURN;
+END
+BEGIN
+  keepValues(2);
+END

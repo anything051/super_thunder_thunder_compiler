@@ -1,0 +1,12 @@
+PROGRAM recursiondemo
+PROCEDURE countdown(n : INTEGER);
+BEGIN
+  WRITE(n);
+  IF 0 < n THEN
+    countdown(n - 1);
+  FI;
+  RETURN;
+END
+BEGIN
+  countdown(2);
+END

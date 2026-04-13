@@ -12,6 +12,13 @@ class SampleProgramTests(unittest.TestCase):
             "test/semantic_errors/undefined_identifier.snl",
             "test/semantic_errors/type_mismatch.snl",
             "test/semantic_errors/duplicate_decl.snl",
+            "test/codegen_cases/selectors.snl",
+            "test/codegen_cases/procedure_frame.snl",
+            "test/codegen_cases/multi_param.snl",
+            "test/codegen_cases/multi_locals.snl",
+            "test/codegen_cases/local_selector.snl",
+            "test/codegen_cases/read_write_selector.snl",
+            "test/codegen_cases/recursive_countdown.snl",
         ]
 
         for path in required:
@@ -65,6 +72,11 @@ class SampleProgramTests(unittest.TestCase):
         sample_paths = [
             "test/codegen_cases/selectors.snl",
             "test/codegen_cases/procedure_frame.snl",
+            "test/codegen_cases/multi_param.snl",
+            "test/codegen_cases/multi_locals.snl",
+            "test/codegen_cases/local_selector.snl",
+            "test/codegen_cases/read_write_selector.snl",
+            "test/codegen_cases/recursive_countdown.snl",
         ]
 
         for sample_path in sample_paths:

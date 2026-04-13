@@ -40,7 +40,8 @@
 
 - 测试与样例
   - `test/` 下已有正向、词法、语法、语义错误样例
-  - `tests/` 下已有 38 个自动化测试覆盖当前实现
+  - `test/codegen_cases/` 下现有 selector、过程栈帧、多参数、多个局部变量、过程内 selector、selector IO、递归倒计时等运行样例
+  - `tests/` 下现有 47 个自动化测试覆盖当前实现
 
 ## 2. 每个文件的作用
 
@@ -122,6 +123,9 @@
 - `tests/test_task10_readme.py`
   - README 关键信息覆盖测试
 
+- `tests/test_task11_mars_runtime.py`
+  - 使用真实 `Mars.jar` 对关键样例做端到端运行时回归测试
+
 ## 3. 三个已知缺口
 
 - 数组/记录 selector codegen 已完成
@@ -134,14 +138,18 @@
   - 仍未实现返回值协议、静态链或 display
 
 - MARS 实机验证已完成
-  - 已使用项目根目录下的 `Mars.jar` 对 `test/codegen_cases/selectors.asm` 和 `test/codegen_cases/procedure_frame.asm` 做真实 MARS 运行验证
-  - 运行命令：
-    - `java -Djava.awt.headless=true -jar Mars.jar nc sm test/codegen_cases/selectors.asm`
-    - `java -Djava.awt.headless=true -jar Mars.jar nc sm test/codegen_cases/procedure_frame.asm`
-  - 运行结果：
-    - `selectors.asm` 输出 `12`，覆盖数组下标和记录字段寻址
-    - `procedure_frame.asm` 输出 `8`，覆盖实参压栈和过程栈帧恢复
-  - MARS 在当前沙箱环境末尾有 Java preferences 锁文件告警，但模拟成功结束且退出码为 `0`
+  - 已使用项目根目录下的 `Mars.jar` 对以下样例做真实 MARS 运行验证：
+    - `test/hello.asm` -> 输出 `7`
+    - `test/codegen_cases/selectors.asm` -> 输出 `12`
+    - `test/codegen_cases/procedure_frame.asm` -> 输出 `8`
+    - `test/codegen_cases/multi_param.asm` -> 输出 `7`
+    - `test/codegen_cases/multi_locals.asm` -> 输出 `23`
+    - `test/codegen_cases/local_selector.asm` -> 输出 `6`
+    - `test/codegen_cases/read_write_selector.asm` -> 输入 `9` 时输出 `9`
+    - `test/codegen_cases/recursive_countdown.asm` -> 输出 `210`
+  - `tests/test_task11_mars_runtime.py` 已把其中 6 个关键场景纳入自动化真实 MARS 运行回归
+  - 运行命令统一为 `java -Djava.awt.headless=true -jar Mars.jar nc sm <file.asm>`
+  - MARS 在当前沙箱环境末尾可能出现 Java preferences / `hsperfdata` 告警，但模拟成功结束且退出码为 `0`
 
 ## 4. 如何运行和测试
 
@@ -161,6 +169,12 @@ python main.py test/hello.snl --dump-tokens --dump-ast
 
 ```bash
 python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+- 运行真实 MARS 运行时回归
+
+```bash
+python -m unittest tests.test_task11_mars_runtime -v
 ```
 
 - 运行单个阶段样例

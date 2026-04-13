@@ -146,7 +146,11 @@ class CodeGenerator:
     def _emit_statement(self, statement: Any, current_scope: str | None) -> None:
         if isinstance(statement, AssignStmtNode):
             self._emit_expression(statement.value, current_scope)
+            self.emitter.emit_text("addi $sp, $sp, -4")
+            self.emitter.emit_text("sw $t0, 0($sp)")
             self._emit_var_address(statement.target, current_scope, target_register="$t1")
+            self.emitter.emit_text("lw $t0, 0($sp)")
+            self.emitter.emit_text("addi $sp, $sp, 4")
             self.emitter.emit_text("sw $t0, 0($t1)")
             return
 
