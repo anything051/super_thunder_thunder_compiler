@@ -1,0 +1,6 @@
+PROGRAM duplicatedemo
+VAR x : INTEGER;
+VAR x : INTEGER;
+BEGIN
+  WRITE(1);
+END

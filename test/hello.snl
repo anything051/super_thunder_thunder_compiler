@@ -1,0 +1,6 @@
+PROGRAM hello
+VAR x : INTEGER;
+BEGIN
+  x := 7;
+  WRITE(x);
+END

@@ -1,0 +1,6 @@
+PROGRAM flowdemo
+VAR x : INTEGER;
+BEGIN
+  IF 1 < 2 THEN WRITE(1); ELSE WRITE(2); FI;
+  WHILE x < 3 DO x := x + 1; ENDWH;
+END
