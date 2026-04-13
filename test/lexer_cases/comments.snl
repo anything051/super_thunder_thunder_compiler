@@ -1,0 +1,8 @@
+{ this file exercises comment skipping }
+PROGRAM commentdemo
+VAR x : INTEGER;
+BEGIN
+  { ignore this assignment context comment }
+  x := 1;
+  WRITE(x);
+END
