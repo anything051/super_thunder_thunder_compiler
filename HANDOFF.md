@@ -133,10 +133,15 @@
   - 过程形参和局部变量已迁移到过程私有栈帧，支持递归和重入场景下的独立存储
   - 仍未实现返回值协议、静态链或 display
 
-- MARS 验证样例已准备
-  - 已新增 `test/codegen_cases/selectors.snl` 和 `test/codegen_cases/procedure_frame.snl`
-  - 当前环境已可自动验证这两个样例能成功生成 `.asm`
-  - 当前工作区未附带 `Mars.jar`，因此仓库内尚未完成真实 MARS 仿真器实机回归
+- MARS 实机验证已完成
+  - 已使用项目根目录下的 `Mars.jar` 对 `test/codegen_cases/selectors.asm` 和 `test/codegen_cases/procedure_frame.asm` 做真实 MARS 运行验证
+  - 运行命令：
+    - `java -Djava.awt.headless=true -jar Mars.jar nc sm test/codegen_cases/selectors.asm`
+    - `java -Djava.awt.headless=true -jar Mars.jar nc sm test/codegen_cases/procedure_frame.asm`
+  - 运行结果：
+    - `selectors.asm` 输出 `12`，覆盖数组下标和记录字段寻址
+    - `procedure_frame.asm` 输出 `8`，覆盖实参压栈和过程栈帧恢复
+  - MARS 在当前沙箱环境末尾有 Java preferences 锁文件告警，但模拟成功结束且退出码为 `0`
 
 ## 4. 如何运行和测试
 
@@ -181,7 +186,7 @@ test/hello.asm
   - 把过程调用从简化静态模型升级为完整栈帧模型
 
 - 第三优先级
-  - 在具备 `Mars.jar` 的环境中跑通 `test/hello.snl`、`test/codegen_cases/selectors.snl`、`test/codegen_cases/procedure_frame.snl`
+  - 继续补充更多覆盖控制流、读写、嵌套 selector 的 MARS 实机样例
 
 - 做完以上三项后
   - 更新 README 的已知限制
