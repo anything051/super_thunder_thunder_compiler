@@ -1,0 +1,4 @@
+PROGRAM demo
+BEGIN
+  WRITE(1);
+END

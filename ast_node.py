@@ -110,6 +110,7 @@ class ConstNode(ASTNode):
 class VarRefNode(ASTNode):
     name: str = ""
     position: Any = None
+    selectors: list[Any] = field(default_factory=list)
 
 
 def pretty_print_ast(node: Any, indent: int = 0) -> str:
