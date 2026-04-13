@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 *.asm
 .worktrees/
+.codex
+InstructionStatistics.txt
+.agents/
