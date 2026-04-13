@@ -1,0 +1,6 @@
+PROGRAM demo
+VAR x : INTEGER;
+BEGIN
+  x := 12;
+  WRITE('a');
+END
