@@ -56,7 +56,8 @@ python main.py test/hello.snl --dump-tokens --dump-ast
 - 全局变量静态存储
 - 表达式、赋值、`READ`、`WRITE`
 - `IF/ELSE`、`WHILE`
-- 过程调用与返回的简化调用约定
+- 数组下标和记录字段 selector 地址计算
+- 过程调用与返回的基础完整栈帧约定（caller 压实参，callee 保存 `$ra/$fp`）
 - 输出 MIPS 汇编，目标运行环境为 MARS
 
 ## 测试样例
@@ -66,6 +67,11 @@ python main.py test/hello.snl --dump-tokens --dump-ast
 - `test/parser_cases/if_while.snl`
 - `test/codegen_cases/selectors.snl`
 - `test/codegen_cases/procedure_frame.snl`
+- `test/codegen_cases/multi_param.snl`
+- `test/codegen_cases/multi_locals.snl`
+- `test/codegen_cases/local_selector.snl`
+- `test/codegen_cases/read_write_selector.snl`
+- `test/codegen_cases/recursive_countdown.snl`
 
 词法样例：
 - `test/lexer_cases/basic.snl`
@@ -95,27 +101,36 @@ python main.py test/hello.snl --dump-tokens --dump-ast
 
 - `RETURN expr` 形式未实现返回值协议
 - 未实现静态链或 display，嵌套过程只依赖全局变量与当前过程私有栈帧
-- 仓库已准备 MARS 验证样例与运行说明，但当前环境未附带 `Mars.jar`，尚未做仓库内实机回归
+- 暂未实现更完整的运行时协议，例如返回值寄存器约定、静态链访问和更丰富的数据布局优化
 
 ## MARS 验证建议
 
-先生成汇编：
+先运行真实 MARS 回归：
+
+```bash
+python -m unittest tests.test_task11_mars_runtime -v
+```
+
+也可以手动生成并运行单个样例：
 
 ```bash
 python main.py test/codegen_cases/selectors.snl
-python main.py test/codegen_cases/procedure_frame.snl
+java -Djava.awt.headless=true -jar Mars.jar nc sm test/codegen_cases/selectors.asm
 ```
 
-若本机已有 MARS jar，可继续运行：
+当前已通过真实 MARS 验证的样例包括：
+- `test/hello.snl`
+- `test/codegen_cases/selectors.snl`
+- `test/codegen_cases/procedure_frame.snl`
+- `test/codegen_cases/multi_param.snl`
+- `test/codegen_cases/multi_locals.snl`
+- `test/codegen_cases/local_selector.snl`
+- `test/codegen_cases/read_write_selector.snl`
+- `test/codegen_cases/recursive_countdown.snl`
 
-```bash
-java -jar /path/to/Mars.jar nc test/codegen_cases/selectors.asm
-java -jar /path/to/Mars.jar nc test/codegen_cases/procedure_frame.asm
-```
-
-建议重点观察：
-- `selectors.asm` 是否正确输出两个整数，覆盖数组下标和记录字段寻址
-- `procedure_frame.asm` 是否正确输出 `8`，覆盖实参压栈和过程栈帧恢复
+说明：
+- 在当前无图形环境下运行 MARS 需要加 `-Djava.awt.headless=true`
+- Java 可能输出 `preferences` 或 `hsperfdata` 告警，但不影响程序运行结果
 
 ## 完成标准对照
 
@@ -138,4 +153,9 @@ java -jar /path/to/Mars.jar nc test/codegen_cases/procedure_frame.asm
 
 - 已生成可执行的 MIPS 汇编输出
 - `python main.py test/hello.snl` 已可生成 `test/hello.asm`
-- 输出目标面向 MARS，但更完整的兼容性收口仍可继续加强
+- 已通过真实 `Mars.jar` 跑通 `hello`、selector、多参数过程、多个局部变量、过程内 selector、selector IO 和递归样例
+
+## 验收文件
+
+- `HANDOFF.md`：当前实现、测试和 MARS 运行结果汇总
+- `FINAL_CHECK.md`：对照 `AGENTS.md` 完成标准的最终验收对照表
