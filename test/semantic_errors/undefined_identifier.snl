@@ -1,0 +1,4 @@
+PROGRAM demo
+BEGIN
+  x := 1;
+END

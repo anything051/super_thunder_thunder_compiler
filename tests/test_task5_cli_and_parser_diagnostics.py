@@ -41,7 +41,7 @@ class CliDumpTests(unittest.TestCase):
             self.assertIn("PROGRAM", stdout.getvalue())
             self.assertIn("AST dump:", stdout.getvalue())
             self.assertIn("ProgramNode", stdout.getvalue())
-            self.assertIn("SEMANTIC", stderr.getvalue())
+            self.assertIn("CODEGEN", stderr.getvalue())
         finally:
             os.unlink(source_path)
 
