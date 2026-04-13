@@ -1,18 +1,27 @@
-# SNL Compiler Project
+cat > AGENTS.md << 'EOF'
+# SNL Compiler - 编译原理课程设计
 
 ## 项目目标
-实现 SNL（Small Nested Language）编译器，包含以下模块：
-1. 词法分析（Lexer）
-2. 语法分析（Parser，递归下降）
-3. 语义分析（Semantic Analyzer）
-4. 目标代码生成（MIPS 汇编，可选）
+实现 SNL 语言完整编译器，语言：Python 3
 
-## 语言要求
-Python 3.x，不依赖第三方编译器生成工具
+## 模块结构
+- lexer.py      词法分析，输出 Token 列表
+- parser.py     递归下降语法分析，构建 AST
+- ast_node.py   AST 节点定义
+- semantic.py   语义分析 + 符号表
+- codegen.py    MIPS 汇编代码生成
+- main.py       入口，串联所有模块
 
-## 测试方法
-python main.py test.snl
+## 测试命令
+python main.py test/hello.snl
 
-## SNL 关键词
-PROGRAM, VAR, TYPE, PROCEDURE, BEGIN, END, IF, THEN, ELSE, FI,
-WHILE, DO, ENDWH, READ, WRITE, RETURN, INTEGER, CHAR, ARRAY, RECORD, OF
+## SNL 关键字
+PROGRAM VAR TYPE PROCEDURE BEGIN END IF THEN ELSE FI
+WHILE DO ENDWH READ WRITE RETURN INTEGER CHAR ARRAY RECORD OF
+
+## 完成标准
+- 词法：能正确识别所有 token 类型，注释跳过
+- 语法：能构建 AST 并层次输出
+- 语义：能检测 12 类语义错误
+- 代码生成：MARS 仿真器能跑通测试程序
+EOF
