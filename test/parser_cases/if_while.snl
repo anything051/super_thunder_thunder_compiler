@@ -1,6 +1,9 @@
+{ 控制流示例：IF 与 WHILE }
 PROGRAM flowdemo
 VAR x : INTEGER;
 BEGIN
+  { 条件分支输出 }
   IF 1 < 2 THEN WRITE(1); ELSE WRITE(2); FI;
+  { 循环累加直到条件不满足 }
   WHILE x < 3 DO x := x + 1; ENDWH;
 END

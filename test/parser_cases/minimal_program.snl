@@ -1,4 +1,6 @@
+{ 最小可运行程序示例 }
 PROGRAM demo
 BEGIN
+  { 直接输出常量 }
   WRITE(1);
 END

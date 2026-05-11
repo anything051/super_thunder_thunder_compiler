@@ -1,6 +1,8 @@
+{ 示例：简单输出程序 }
 PROGRAM hello
 VAR x : INTEGER;
 BEGIN
+  { 赋值并输出 }
   x := 7;
   WRITE(x);
 END

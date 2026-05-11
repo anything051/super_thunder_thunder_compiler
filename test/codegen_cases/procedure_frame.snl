@@ -1,13 +1,17 @@
+{ 过程调用与局部变量示例 }
 PROGRAM procframe
 VAR seed : INTEGER;
+{ 过程：输入一个值并输出加一后的结果 }
 PROCEDURE showPlusOne(value : INTEGER);
 VAR temp : INTEGER;
 BEGIN
+  { 过程内部计算与输出 }
   temp := value + 1;
   WRITE(temp);
   RETURN;
 END
 BEGIN
+  { 主程序调用过程 }
   seed := 7;
   showPlusOne(seed);
 END

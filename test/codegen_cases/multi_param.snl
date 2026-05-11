@@ -1,13 +1,17 @@
+{ 多参数过程示例 }
 PROGRAM multiparam
 VAR x, y : INTEGER;
+{ 过程：计算两数之和并输出 }
 PROCEDURE addPair(a, b : INTEGER);
 VAR sum : INTEGER;
 BEGIN
+  { 过程内部求和 }
   sum := a + b;
   WRITE(sum);
   RETURN;
 END
 BEGIN
+  { 主程序准备参数并调用 }
   x := 2;
   y := 5;
   addPair(x, y);

@@ -1,5 +1,7 @@
+{ 语义错误示例：类型不匹配 }
 PROGRAM mismatchdemo
 VAR x : INTEGER;
 BEGIN
+  { 故意将字符赋给整数 }
   x := 'a';
 END

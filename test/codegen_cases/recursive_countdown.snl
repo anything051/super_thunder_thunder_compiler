@@ -1,12 +1,17 @@
+{ 递归过程示例 }
 PROGRAM recursiondemo
+{ 过程：递归倒计时并输出 }
 PROCEDURE countdown(n : INTEGER);
 BEGIN
+  { 先输出当前值 }
   WRITE(n);
+  { 递归终止条件与递归调用 }
   IF 0 < n THEN
     countdown(n - 1);
   FI;
   RETURN;
 END
 BEGIN
+  { 主程序调用递归过程 }
   countdown(2);
 END

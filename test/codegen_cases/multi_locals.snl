@@ -1,7 +1,10 @@
+{ 局部变量与过程调用示例 }
 PROGRAM multilocals
+{ 过程：保持并输出两个局部值 }
 PROCEDURE keepValues(seed : INTEGER);
 VAR first, second : INTEGER;
 BEGIN
+  { 过程内部赋值与输出 }
   first := seed;
   second := seed + 1;
   WRITE(first);
@@ -9,5 +12,6 @@ BEGIN
   RETURN;
 END
 BEGIN
+  { 主程序调用过程 }
   keepValues(2);
 END

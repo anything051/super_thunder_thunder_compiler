@@ -1,6 +1,8 @@
+{ 语义错误示例：重复声明 }
 PROGRAM duplicatedemo
 VAR x : INTEGER;
 VAR x : INTEGER;
 BEGIN
+  { 主程序输出 }
   WRITE(1);
 END

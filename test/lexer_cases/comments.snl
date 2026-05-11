@@ -1,8 +1,10 @@
 { this file exercises comment skipping }
+{ 注释与常规语句混合示例 }
 PROGRAM commentdemo
 VAR x : INTEGER;
 BEGIN
   { ignore this assignment context comment }
+  { 赋值并输出 }
   x := 1;
   WRITE(x);
 END

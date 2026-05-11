@@ -1,6 +1,8 @@
+{ 词法测试：基本标识符与字符常量 }
 PROGRAM demo
 VAR x : INTEGER;
 BEGIN
+  { 赋值并输出字符常量 }
   x := 12;
   WRITE('a');
 END

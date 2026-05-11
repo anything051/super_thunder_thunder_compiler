@@ -1,11 +1,16 @@
+{ 读写与选择器示例 }
 PROGRAM rwselector
+{ 记录类型定义 }
 TYPE pair = RECORD
   left, right : INTEGER;
 END;
+{ 主程序变量 }
 VAR nums : ARRAY [1..3] OF INTEGER;
 VAR item : pair;
 BEGIN
+  { 从输入读取到数组元素 }
   READ(nums[2]);
+  { 读数组后写入记录并输出 }
   item.right := nums[2];
   WRITE(item.right);
 END

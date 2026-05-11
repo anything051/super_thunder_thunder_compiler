@@ -1,16 +1,21 @@
+{ 局部数组与记录选择器示例 }
 PROGRAM localselector
+{ 过程：在局部结构中读写并输出 }
 PROCEDURE showLocal(idx : INTEGER);
 VAR localArr : ARRAY [1..3] OF INTEGER;
 VAR localRec : RECORD
   left, right : INTEGER;
 END;
 BEGIN
+  { 初始化局部数组并写入记录 }
   localArr[1] := 3;
   localArr[2] := idx;
   localRec.right := localArr[2];
+  { 输出记录字段 }
   WRITE(localRec.right);
   RETURN;
 END
 BEGIN
+  { 主程序调用过程 }
   showLocal(6);
 END
